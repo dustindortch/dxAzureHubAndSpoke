@@ -35,25 +35,6 @@ resource "azurerm_virtual_network" "spokes" {
     tags = var.TAGS
 }
 
-locals {
-    spoke_subnets = flatten([
-        for spoke_key, subnets in var.SPOKES : [
-            for subnet_key, subnet in subnets.subnets : {
-                spoke_key            = spoke_key
-                subnet_key           = subnet_key
-                address_prefixes     = subnet.address_prefixes
-                private_link         = subnet.private_link
-                resource_group_name  = azurerm_resource_group.spokes[spoke_key].name
-                virtual_network_name = azurerm_virtual_network.spokes[spoke_key].name
-            }
-        ]
-    ])
-
-    flattened_subnets = {
-        for subnet in local.spoke_subnets : "${subnet.spoke_key}.${subnet.subnet_key}" => subnet
-    }
-}
-
 resource "azurerm_subnet" "spoke-subnets" {
     for_each = local.flattened_subnets
 
